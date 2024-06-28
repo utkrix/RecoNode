@@ -36,4 +36,4 @@ This project utilizes an ESP8266 microcontroller and an ultrasonic sensor to det
 2. Open the Serial Monitor to view sensor readings and debug messages.
 3. Ensure the board connects to Wi-Fi successfully.
 4. Observe the board's behavior when objects are detected within 20 cm of the sensor.
-```
+
