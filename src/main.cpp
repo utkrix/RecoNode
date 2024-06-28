@@ -1,21 +1,22 @@
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
-#include <WiFiClient.h>
+#include <WiFiClientSecure.h>
 
-const char *ssid = "** SSID HERE";
-const char *password = "** PASSWORD HERE";
+const char *ssid = "ekbattalalmohan";
+const char *password = "mitholalmohan";
 
 const int echoPin = 14;
 const int trigPin = 2;
-const int ledPin  = 15;// LED for visuals
+const int ledPin = 15; // LED for visuals
 
 #define SOUND_SPEED 0.034
 
 long duration;
 float distanceCm;
 
-void blinkLED(float);
+void blinkLED();
+
 void setup()
 {
   Serial.begin(9600);
@@ -43,12 +44,10 @@ void loop()
 
   // Set the trigPin HIGH for 10 microseconds
   digitalWrite(trigPin, HIGH);
-  digitalWrite(ledPin, HIGH); // Turn on LED to visualize trigger pulse
   delayMicroseconds(10);
   digitalWrite(trigPin, LOW);
-  digitalWrite(ledPin, LOW); // Turn off LED after pulse
 
-  // Read the echoPin, pulseIn() returns the duration (length of the pulse) in microseconds
+  // Read the echoPin, pulseIn() returns length of the pulse) in microseconds
   duration = pulseIn(echoPin, HIGH, 30000); // Timeout of 30 milliseconds
 
   // Check if the duration is zero, indicating no echo was received
@@ -67,25 +66,40 @@ void loop()
 
     if (distanceCm < 20)
     {
-      blinkLED(distanceCm);
+      blinkLED();
     }
   }
 
-  // Wait a bit before next measurement
-  delay(500);
+  delay(800);
+
+
 }
 
-void blinkLED(float distance)
+void blinkLED()
 {
-  int n = 20;
-  Serial.print("Distance: ");
-  Serial.print(distance);
-  Serial.println(" cm");
-  for (int i = 0; i < n; i++)
+  if (WiFi.status() == WL_CONNECTED)
   {
-    digitalWrite(ledPin, HIGH);
-    delay(500);
-    digitalWrite(ledPin, LOW);
-    delay(500);
+    WiFiClientSecure client;
+    HTTPClient http;
+
+    client.setInsecure(); // disabling SSL certificate verification
+    http.begin(client, "**YOUR NTFY URL");
+    http.addHeader("Content-Type", "text/plain");
+    String payload = "YOUR MESSAGE";
+
+    int httpResponseCode = http.POST(payload);
+    if (httpResponseCode > 0)
+    {
+      Serial.print("HTTP Response code: ");
+      Serial.println(httpResponseCode);
+      String response = http.getString();
+      Serial.println(response);
+    }
+    else
+    {
+      Serial.print("Error code: ");
+      Serial.println(httpResponseCode);
+    }
+    http.end();
   }
 }
