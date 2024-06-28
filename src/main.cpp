@@ -3,36 +3,28 @@
 #include <ESP8266HTTPClient.h>
 #include <WiFiClientSecure.h>
 
-const char *ssid = "ekbattalalmohan";
-const char *password = "mitholalmohan";
+const char *ssid = "Your SSID";
+const char *password = "Your Password";
 
+// Echo and Trigger Pin Setup
 const int echoPin = 14;
 const int trigPin = 2;
-const int ledPin = 15; // LED for visuals
+
 
 #define SOUND_SPEED 0.034
 
 long duration;
 float distanceCm;
 
-void blinkLED();
+void Alert();
 
 void setup()
 {
   Serial.begin(9600);
   pinMode(trigPin, OUTPUT);
   pinMode(echoPin, INPUT);
-  pinMode(ledPin, OUTPUT);
 
   WiFi.begin(ssid, password);
-  Serial.println("Connecting");
-  while (WiFi.status() != WL_CONNECTED)
-  {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.println("");
-  Serial.print("Connected to WiFi network with IP Address: ");
   Serial.println(WiFi.localIP());
 }
 
@@ -50,32 +42,29 @@ void loop()
   // Read the echoPin, pulseIn() returns length of the pulse) in microseconds
   duration = pulseIn(echoPin, HIGH, 30000); // Timeout of 30 milliseconds
 
-  // Check if the duration is zero, indicating no echo was received
-  if (duration == 0)
-  {
-    Serial.println("No pulse received within the timeout period.");
-  }
-  else
-  {
 
     // Calculate the distance in cm
     distanceCm = duration * SOUND_SPEED / 2;
-    Serial.print("Distance: ");
-    Serial.print(distanceCm);
-    Serial.println(" cm");
-
     if (distanceCm < 20)
     {
-      blinkLED();
+      Alert();
     }
-  }
 
   delay(800);
+  // reconnection if wifi connection is lost
+  if (WiFi.status() != WL_CONNECTED) {
+    WiFi.disconnect();
+    WiFi.begin(ssid, password);
+    while (WiFi.status() != WL_CONNECTED) {
+      delay(500);
+      Serial.print(".");
+    }
+  }
 
 
 }
 
-void blinkLED()
+void Alert()
 {
   if (WiFi.status() == WL_CONNECTED)
   {
@@ -83,7 +72,7 @@ void blinkLED()
     HTTPClient http;
 
     client.setInsecure(); // disabling SSL certificate verification
-    http.begin(client, "**YOUR NTFY URL");
+    http.begin(client, "*YOUR NTFY URL");
     http.addHeader("Content-Type", "text/plain");
     String payload = "YOUR MESSAGE";
 
@@ -91,13 +80,6 @@ void blinkLED()
     if (httpResponseCode > 0)
     {
       Serial.print("HTTP Response code: ");
-      Serial.println(httpResponseCode);
-      String response = http.getString();
-      Serial.println(response);
-    }
-    else
-    {
-      Serial.print("Error code: ");
       Serial.println(httpResponseCode);
     }
     http.end();
